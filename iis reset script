@@ -1,0 +1,27 @@
+# List of target servers
+$servers = @("server1", "server2", "server3", "server4", "server5")
+
+# Loop through each server and run IIS reset remotely
+foreach ($server in $servers) {
+    Write-Host "Resetting IIS on $server"
+    Invoke-Command -ComputerName $server -ScriptBlock {
+        iisreset /noforce
+    }
+}
+
+
+
+# List of target servers
+$servers = @("server1", "server2", "server3", "server4", "server5")
+
+# Loop through each server and run IIS reset remotely
+foreach ($server in $servers) {
+    Write-Host "Resetting IIS on $server"
+    Invoke-Command -ComputerName $server -ScriptBlock {
+        iisreset /noforce
+    }
+}
+
+# Wait for 5 minutes before proceeding to the next task
+Write-Host "Waiting for 5 minutes before the next task..."
+Start-Sleep -Seconds 300
