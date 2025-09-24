@@ -1,0 +1,47 @@
+# Define F5 and pool parameters
+$f5Host = "f5-hostname-or-ip"
+$f5User = "admin"
+$f5Pass = "yourpassword"
+$poolName = "your_pool_name"
+$maxConnectionsThreshold = 10
+$delaySeconds = 180  # 3 minutes delay
+
+Import-Module Posh-SSH
+$securePass = ConvertTo-SecureString $f5Pass -AsPlainText -Force
+$credential = New-Object System.Management.Automation.PSCredential ($f5User, $securePass)
+
+function Get-PoolMemberConnections {
+    $session = New-SSHSession -ComputerName $f5Host -Credential $credential
+    $result = Invoke-SSHCommand -SSHSession $session -Command "tmsh show /ltm pool $poolName members"
+    Remove-SSHSession -SSHSession $session
+    return $result.Output
+}
+
+while ($true) {
+    $output = Get-PoolMemberConnections
+
+    # Parse output to extract connection counts
+    # This example assumes parsing logic to get total active connections per member
+    # Implementation depends on actual output format; placeholder below:
+    $activeConnections = 0
+    foreach ($line in $output) {
+        # Assume you parse each line; if line contains connection count, sum it here
+        # Example placeholder regex (customize as per output):
+        if ($line -match '(\d+)\s+Active connections') {
+            $conn = [int]$matches[1]
+            $activeConnections += $conn
+        }
+    }
+
+    Write-Host "Total active connections in pool $poolName: $activeConnections"
+
+    if ($activeConnections -le $maxConnectionsThreshold) {
+        Write-Host "Connections are below threshold. Proceeding..."
+        break
+    } else {
+        Write-Host "Connections above $maxConnectionsThreshold. Waiting $delaySeconds seconds before retry..."
+        Start-Sleep -Seconds $delaySeconds
+    }
+}
+
+# Proceed with IIS reset or next step after connections drained
